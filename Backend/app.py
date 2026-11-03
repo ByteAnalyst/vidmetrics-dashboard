@@ -1,6 +1,9 @@
 from dotenv import load_dotenv
 import os
 import requests
+import sys
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 load_dotenv()
 
@@ -12,7 +15,6 @@ videos_url = 'https://www.googleapis.com/youtube/v3/videos'
 
 #channel id
 def get_analytics(channels):
-    empty_channel_list = []
     params = {
     "key": API_KEY,
     "part": "snippet,statistics,contentDetails",
@@ -54,7 +56,6 @@ channel_id = 'UCK8sQmJBp8GCxrOtXWBpyEA'
 #video id
 
 def get_video_id(uploads_id):
-    empty_video_list = []
     params = {
     'key': API_KEY,
     'part': 'contentDetails',
@@ -75,6 +76,10 @@ def get_video_id(uploads_id):
                 video_dict['id'] = item.get("contentDetails", {}).get('videoId')
                 result_ids.append(video_dict)
             return result_ids
+
+        else:
+            print('No video ids found in the response')
+            return []
            
     else:
         print('There was some problem')
@@ -82,7 +87,6 @@ def get_video_id(uploads_id):
         return []
     return []
 def get_videos(ids_list):
-    empty_videos_list = []
     if ids_list and isinstance(ids_list[0], dict):
         video_ids = [item.get('id') for item in ids_list if item.get('id')]
     else:
@@ -123,10 +127,14 @@ def get_videos(ids_list):
         print(response.text)
         return []
     return []
-channel_results = get_analytics(channel_id)
-if channel_results:
-    uploads_id =  channel_results[0].get('uploads')
-    video_ids = get_video_id(uploads_id)
-    video_rows = get_videos(video_ids)
-else:
-    print("No Results were found")
+
+if __name__ == "__main__":
+    channel_results = get_analytics(channel_id)
+    if channel_results:
+        uploads_id =  channel_results[0].get('uploads')
+        video_ids = get_video_id(uploads_id)
+        video_rows = get_videos(video_ids)
+        print(f'Video Rows: {video_rows}')
+    else:
+        print("No Results were found")
+
