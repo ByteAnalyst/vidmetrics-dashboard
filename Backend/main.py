@@ -4,11 +4,14 @@ from analysis import get_top_10_views
 from analysis import get_top_10_engagement
 from analysis import get_worst_10_engagement
 from analysis import get_monthly_performance
-from analysis import dataframe 
+from analysis import get_data 
 
-df = dataframe()
+
 #create fastapi app
 app = FastAPI()
+
+df = get_data()
+
 @app.get('/')
 def root():
     return {"message": "Welcome to the Video Analytics API"}
