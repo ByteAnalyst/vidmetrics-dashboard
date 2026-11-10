@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from analysis import get_channel_overview
 from analysis import get_top_10_views
 from analysis import get_top_10_engagement
@@ -9,6 +10,18 @@ from analysis import get_data
 
 #create fastapi app
 app = FastAPI()
+
+origins = [
+    'http://localhost:5173'
+]
+
+app.add_middleware (
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*']
+)
 
 df = get_data()
 
