@@ -84,6 +84,6 @@ def get_monthly_performance(df):
                 'like_count': 'sum',
                 'comment_count': 'sum',
                 'video_id': 'count'}).reset_index()
-        return {
-            "monthly_performance": monthly_performance.to_dict(orient='records')
-        }
+        monthly_performance['published_date'] = monthly_performance['published_date'].astype(str)
+        return monthly_performance.to_dict(orient='records')
+    

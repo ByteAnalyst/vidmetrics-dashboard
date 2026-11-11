@@ -1,12 +1,44 @@
-import {useState, useEffect} from 'react';
+import { useEffect, useState } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 function App() {
-    const [overview, setOverview] = useState(null);
+    const [monthlyData, setMonthlyData] = useState(null);
 
     useEffect(() => {
-        fetch('http://localhost:8000/overview/')
+        fetch('http://127.0.0.1:8000/monthly_performance')
             .then(response => response.json())
-            .then(data => setOverview(data))
-            console.log(overview)
+            .then(data => setMonthlyData(data))
     }, []);
+
+    return (
+        <div>
+            <h1>Monthly Performance</h1>
+            {monthlyData?.length > 0 && (
+                <div>
+                    {monthlyData.map(item => (
+                        <div key={item.published_date}>
+                            <p>Month: {item.published_date}</p>
+                            <p>Views: {item.view_count}</p>
+                            <p>Likes: {item.like_count}</p>
+                            <p>Comments: {item.comment_count}</p>
+                        </div>
+                    ))}
+                    <ResponsiveContainer width='100%' height={300}>
+                        <LineChart data={monthlyData}>
+                            <CartesianGrid strokeDasharray='3 3' />
+                            <XAxis dataKey='published_date' />
+                            <YAxis />
+                            <Tooltip />
+                            <Legend />
+                            <Line type='monotone' dataKey='view_count' stroke='#8884d8' />
+                            <Line type='monotone' dataKey='like_count' stroke='#82ca9d' />
+                            <Line type='monotone' dataKey='comment_count' stroke='#ffc658' />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
+        </div>
+    );
 }
+
+export default App;

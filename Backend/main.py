@@ -29,8 +29,8 @@ df = get_data()
 def root():
     return {"message": "Welcome to the Video Analytics API"}
 
-@app.get('/overview/{channel_id}')
-def overview(channel_id: str):
+@app.get('/overview')
+def overview():
     return get_channel_overview(df)
 
 @app.get('/top_10_by_views')
