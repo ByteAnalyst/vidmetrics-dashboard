@@ -5,6 +5,8 @@ from analysis import get_top_10_views
 from analysis import get_top_10_engagement
 from analysis import get_worst_10_engagement
 from analysis import get_monthly_performance
+from analysis import get_video_performance
+from analysis import get_weekly_performance
 from analysis import get_data 
 
 
@@ -48,4 +50,12 @@ def worst_10_by_engagement():
 @app.get('/monthly_performance')
 def monthly_performance():
     return get_monthly_performance(df)
+
+@app.get('/weekly_performance')
+def weekly_performance():
+    return get_weekly_performance(df)
+
+@app.get('/video_performance')
+def video_performance():
+    return get_video_performance(df)
 

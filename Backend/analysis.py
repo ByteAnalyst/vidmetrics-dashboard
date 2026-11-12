@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from Backend.main import monthly_performance
 from app import get_analytics
 from app import get_video_id
 from app import get_videos
@@ -86,4 +87,24 @@ def get_monthly_performance(df):
                 'video_id': 'count'}).reset_index()
         monthly_performance['published_date'] = monthly_performance['published_date'].astype(str)
         return monthly_performance.to_dict(orient='records')
+
+def get_weekly_performance(df):
+    if 'published_date' in df.columns and not df['published_date'].isnull().all():
+        df['published_date'] = pd.to_datetime(df['published_date'], errors='coerce')
+        weekly_performance = df.groupby(
+            df['published_date'].dt.to_period('W')).agg({
+                'view_count': 'sum',
+                'like_count': 'sum',
+                'comment_count': 'sum',
+                'video_id': 'count'}).reset_index()
+        weekly_performance['published_date'] = weekly_performance['published_date'].astype(str)
+        return weekly_performance.to_dict(orient='records')
+
+def get_video_performance(df):
+    if 'published_date' in df.columns and not df['published_date'].isnull().all():
+        df['published_date'] = pd.to_datetime(df['published_date'], errors='coerce')
+        video_performance = df.sort_values(by='published_date', ascending=True)[['title', 'view_count', 'like_count', 'comment_count', 'engagement_rate', 'published_date']]
+        video_performance['published_date'] = video_performance['published_date'].astype(str)
+        return video_performance.to_dict(orient='records')
+
     

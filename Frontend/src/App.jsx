@@ -2,37 +2,38 @@ import { useEffect, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 function App() {
-    const [monthlyData, setMonthlyData] = useState(null);
+    const [videoData, setVideoData] = useState(null);
 
     useEffect(() => {
-        fetch('http://127.0.0.1:8000/monthly_performance')
+        fetch('http://127.0.0.1:8000/video_performance')
             .then(response => response.json())
-            .then(data => setMonthlyData(data))
+            .then(data => setVideoData(data))
     }, []);
 
     return (
         <div>
-            <h1>Monthly Performance</h1>
-            {monthlyData?.length > 0 && (
+            <h1>Video Performance</h1>
+            {videoData?.length > 0 && (
                 <div>
-                    {monthlyData.map(item => (
+                    {videoData.map(item => (
                         <div key={item.published_date}>
-                            <p>Month: {item.published_date}</p>
+                            <p>Date: {item.published_date}</p>
                             <p>Views: {item.view_count}</p>
                             <p>Likes: {item.like_count}</p>
                             <p>Comments: {item.comment_count}</p>
                         </div>
                     ))}
                     <ResponsiveContainer width='100%' height={300}>
-                        <LineChart data={monthlyData}>
+                        <LineChart data={videoData}>
                             <CartesianGrid strokeDasharray='3 3' />
                             <XAxis dataKey='published_date' />
-                            <YAxis />
+                            <YAxis yAxisId='left' orientation='left' />
+                            <YAxis yAxisId='right' orientation='right' />
                             <Tooltip />
                             <Legend />
-                            <Line type='monotone' dataKey='view_count' stroke='#8884d8' />
-                            <Line type='monotone' dataKey='like_count' stroke='#82ca9d' />
-                            <Line type='monotone' dataKey='comment_count' stroke='#ffc658' />
+                            <Line type='monotone' yAxisId='left' dataKey='view_count' stroke='#8884d8' />
+                            <Line type='monotone' yAxisId='right' dataKey='like_count' stroke='#82ca9d' />
+                            <Line type='monotone' yAxisId='right' dataKey='comment_count' stroke='#ffc658' />
                         </LineChart>
                     </ResponsiveContainer>
                 </div>
