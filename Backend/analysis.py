@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from Backend.main import monthly_performance
 from app import get_analytics
 from app import get_video_id
 from app import get_videos
@@ -17,15 +16,16 @@ def get_data():
     if 'view_count' in df.columns and 'like_count' in df.columns and 'comment_count' in df.columns and not df['view_count'].isnull().all() and not df['like_count'].isnull().all() and not df['comment_count'].isnull().all():
         df['engagement_rate'] = (df['like_count'] + df['comment_count']) / df['view_count']
         return pd.DataFrame(df)
-    return []
+    return pd.DataFrame()
 
 df = get_data()
 
 # Data Cleaning
-df = df.dropna(subset=['video_id', 'published_date', 'channel_id'])
-df = df.drop_duplicates(subset=['video_id'])
-df = df[['video_id', 'published_date', 'channel_id', 'title', 'view_count', 'like_count', 'comment_count', 'engagement_rate']]
-df['published_date'] = pd.to_datetime(df['published_date'], errors='coerce')
+if not df.empty:
+    df = df.dropna(subset=['video_id', 'published_date', 'channel_id'])
+    df = df.drop_duplicates(subset=['video_id'])
+    df = df[['video_id', 'published_date', 'channel_id', 'title', 'view_count', 'like_count', 'comment_count', 'engagement_rate']]
+    df['published_date'] = pd.to_datetime(df['published_date'], errors='coerce')
 
 # EDA
 
@@ -44,7 +44,7 @@ def get_channel_overview(df):
             "total_likes": int(total_likes),
             "total_comments": int(total_comments),
             "average_views": float(average_views),
-            "average_engagement": float(average_engagement)
+            "average_engagement": 0.0
         }
 
 #top 10 videos by views
@@ -76,35 +76,78 @@ def get_worst_10_engagement(df):
     return []
 
 #performance over time
-def get_monthly_performance(df):
+PERIODS = {'day': 'D', 'week': 'W', 'month': 'M', 'year': 'Y'}
+
+def get_video_performance(df, period='month'):
+    if 'published_date' not in df.columns or df['published_date'].isnull().all():
+        return []
+
+    freq = PERIODS.get(period, 'M')
+    dates = pd.to_datetime(df['published_date'], errors='coerce').dt.tz_localize(None)
+
+    video_performance = (
+        df.groupby(dates.dt.to_period(freq))
+        .agg({
+            'view_count': 'sum',
+            'like_count': 'sum',
+            'comment_count': 'sum',
+            'video_id': 'count'
+        })
+        .reset_index()
+        .sort_values(by='published_date', ascending=True)
+    )
+
+    video_performance['engagement_rate'] = (
+        (video_performance['like_count'] + video_performance['comment_count'])
+        / video_performance['view_count']
+    ).replace([np.inf, -np.inf], np.nan).fillna(0)
+
+    video_performance['published_date'] = video_performance['published_date'].astype(str)
+    return video_performance.to_dict(orient='records')
+
+def best_time_to_post(df):
     if 'published_date' in df.columns and not df['published_date'].isnull().all():
         df['published_date'] = pd.to_datetime(df['published_date'], errors='coerce')
-        monthly_performance = df.groupby(
-            df['published_date'].dt.to_period('M')).agg({
-                'view_count': 'sum',
-                'like_count': 'sum',
-                'comment_count': 'sum',
-                'video_id': 'count'}).reset_index()
-        monthly_performance['published_date'] = monthly_performance['published_date'].astype(str)
-        return monthly_performance.to_dict(orient='records')
+        df['hour'] = df['published_date'].dt.hour
+        best_time = df.groupby('hour').agg({
+            'view_count': 'sum',
+            'like_count': 'sum',
+            'comment_count': 'sum',
+            'video_id': 'count'}).reset_index()
+        best_time = best_time.sort_values(by='view_count', ascending=False)
+        return best_time.to_dict(orient='records')
 
-def get_weekly_performance(df):
-    if 'published_date' in df.columns and not df['published_date'].isnull().all():
-        df['published_date'] = pd.to_datetime(df['published_date'], errors='coerce')
-        weekly_performance = df.groupby(
-            df['published_date'].dt.to_period('W')).agg({
-                'view_count': 'sum',
-                'like_count': 'sum',
-                'comment_count': 'sum',
-                'video_id': 'count'}).reset_index()
-        weekly_performance['published_date'] = weekly_performance['published_date'].astype(str)
-        return weekly_performance.to_dict(orient='records')
+def correlation_view(df):
+    if 'view_count' in df.columns and 'like_count' in df.columns and 'comment_count' in df.columns and not df['view_count'].isnull().all() and not df['like_count'].isnull().all() and not df['comment_count'].isnull().all():
+        correlation = df[['view_count', 'like_count', 'comment_count']].corr()
+        return correlation.to_dict()
+    return {}
 
-def get_video_performance(df):
-    if 'published_date' in df.columns and not df['published_date'].isnull().all():
-        df['published_date'] = pd.to_datetime(df['published_date'], errors='coerce')
-        video_performance = df.sort_values(by='published_date', ascending=True)[['title', 'view_count', 'like_count', 'comment_count', 'engagement_rate', 'published_date']]
-        video_performance['published_date'] = video_performance['published_date'].astype(str)
-        return video_performance.to_dict(orient='records')
+def key_insight_summary(df):
+    # most viewed video
+    if 'view_count' in df.columns and not df['view_count'].isnull().all():
+        most_viewed_video = df.loc[df['view_count'].idxmax()]
+        most_viewed_video_title = most_viewed_video['title']
+        most_viewed_video_views = most_viewed_video['view_count']
+        most_viewed_video_insight = f"The most viewed video is '{most_viewed_video_title}' with {most_viewed_video_views} views."
+    else:
+        most_viewed_video_insight = "No data available for most viewed video."
 
-    
+    # most liked video
+    if 'like_count' in df.columns and not df['like_count'].isnull().all():
+        most_liked_video = df.loc[df['like_count'].idxmax()]
+        most_liked_video_title = most_liked_video['title']
+        most_liked_video_likes = most_liked_video['like_count']
+        most_liked_video_insight = f"The most liked video is '{most_liked_video_title}' with {most_liked_video_likes} likes."
+    else:
+        most_liked_video_insight = "No data available for most liked video."
+
+    # best time to post
+    best_time = best_time_to_post(df)
+    if not best_time:
+        best_time_insight = "No data available for best posting time."
+    else:
+        best_hour = best_time[0]['hour']
+        best_time_insight = f"The best time to post is {best_hour}:00."
+
+    return [most_viewed_video_insight, most_liked_video_insight, best_time_insight]

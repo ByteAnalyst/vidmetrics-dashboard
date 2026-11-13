@@ -4,9 +4,11 @@ from analysis import get_channel_overview
 from analysis import get_top_10_views
 from analysis import get_top_10_engagement
 from analysis import get_worst_10_engagement
-from analysis import get_monthly_performance
 from analysis import get_video_performance
-from analysis import get_weekly_performance
+from analysis import best_time_to_post
+from analysis import best_time_to_post
+from analysis import key_insight_summary
+from analysis import correlation_view
 from analysis import get_data 
 
 
@@ -47,15 +49,18 @@ def top_10_by_engagement():
 def worst_10_by_engagement():
     return get_worst_10_engagement(df)
 
-@app.get('/monthly_performance')
-def monthly_performance():
-    return get_monthly_performance(df)
-
-@app.get('/weekly_performance')
-def weekly_performance():
-    return get_weekly_performance(df)
-
 @app.get('/video_performance')
 def video_performance():
     return get_video_performance(df)
 
+@app.get('/best_time_to_post')
+def best_time_to_post_endpoint():
+    return best_time_to_post(df)
+
+@app.get('/key_insights')
+def key_insights():
+    return key_insight_summary(df)
+
+@app.get('/correlation')
+def correlation():
+    return correlation_view(df)
